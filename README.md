@@ -8,7 +8,7 @@ A mod for Honey Select 2 that adds more options for the breast category.
 </details>
 
 <details>
-  <summary>GIF</summary>
+  <summary>GIF (NSFW)</summary>
   
 ![](https://raw.githubusercontent.com/FairBear/HS2_BoobSettings/master/Preview/Preview1.gif)
 </details>
