@@ -2,22 +2,21 @@
 using KKAPI.Maker;
 using KKAPI.Maker.UI;
 using System;
+using System.Collections.Generic;
 using UniRx;
 
 namespace HS2_BoobSettings
 {
 	public partial class HS2_BoobSettings
 	{
-		public static MakerToggle overridePhysics;
-		public static MakerSlider damping;
-		public static MakerSlider elasticity;
-		public static MakerSlider stiffness;
-		public static MakerSlider inert;
+		public static Dictionary<string, MakerCategory> categories = new Dictionary<string, MakerCategory>()
+		{
+			{ string.Empty, MakerConstants.Body.Breast },
+			{ BoobController.BUTT, MakerConstants.Body.Lower }
+		};
 
-		public static MakerToggle overrideGravity;
-		public static MakerSlider gravityX;
-		public static MakerSlider gravityY;
-		public static MakerSlider gravityZ;
+		public static Dictionary<string, MakerToggle> toggles = new Dictionary<string, MakerToggle>();
+		public static Dictionary<string, MakerSlider> sliders = new Dictionary<string, MakerSlider>();
 
 		public static ChaControl MakerChaCtrl => MakerAPI.GetCharacterControl();
 		public static BoobController MakerController =>
@@ -27,93 +26,158 @@ namespace HS2_BoobSettings
 		{
 			float min = SliderMin.Value / 100f;
 			float max = SliderMax.Value / 100f;
-			MakerCategory category = MakerConstants.Body.Breast;
 
-			overridePhysics = e.AddControl(new MakerToggle(category, "Override Breast Physics", this));
-			overridePhysics.ValueChanged.Subscribe(Observer.Create<bool>(MakerAPI_TogglePhysics));
 
-			damping = e.AddControl(new MakerSlider(category, "Breast Damping", min, max, 0.14f, this));
-			damping.ValueChanged.Subscribe(Observer.Create<float>(v =>
+			// Boob
+
+			foreach (string prefix in BoobController.prefixKeys)
 			{
-				MakerController.damping = v;
-				MakerChaCtrl.UpdateBustSoftness();
-			}));
+				foreach (string boolKey in BoobController.boolKeys)
+				{
+					string key = prefix + boolKey;
+					MakerToggle toggle = toggles[key] = e.AddControl(new MakerToggle(
+						categories[prefix],
+						BoobController.makerAPILabels[key],
+						BoobController.boolDefaults[key],
+						this
+					));
+					toggle.ValueChanged.Subscribe(Observer.Create<bool>(v =>
+						MakerAPI_ToggleValueChanged(key, v)
+					));
+				}
 
-			elasticity = e.AddControl(new MakerSlider(category, "Breast Elasticity", min, max, 0.17f, this));
-			elasticity.ValueChanged.Subscribe(Observer.Create<float>(v =>
-			{
-				MakerController.elasticity = v;
-				MakerChaCtrl.UpdateBustSoftness();
-			}));
+				foreach (string floatKey in BoobController.floatKeys)
+				{
+					string key = prefix + floatKey;
+					float defaultValue = BoobController.floatDefaults[key];
 
-			stiffness = e.AddControl(new MakerSlider(category, "Breast Stiffness", min, max, 0.5f, this));
-			stiffness.ValueChanged.Subscribe(Observer.Create<float>(v =>
-			{
-				MakerController.stiffness = v;
-				MakerChaCtrl.UpdateBustSoftness();
-			}));
+					if (BoobController.floatMults.TryGetValue(floatKey, out float mult))
+						defaultValue *= mult;
 
-			inert = e.AddControl(new MakerSlider(category, "Breast Inert", min, max, 0.8f, this));
-			inert.ValueChanged.Subscribe(Observer.Create<float>(v =>
-			{
-				MakerController.inert = v;
-				MakerChaCtrl.ChangeBustInert(false);
-			}));
-
-			overrideGravity = e.AddControl(new MakerToggle(category, "Override Breast Gravity", this));
-			overrideGravity.ValueChanged.Subscribe(Observer.Create<bool>(MakerAPI_ToggleGravity));
-
-			gravityX = e.AddControl(new MakerSlider(category, "Breast Gravity X", min, max, 0f, this));
-			gravityX.ValueChanged.Subscribe(Observer.Create<float>(v =>
-			{
-				MakerController.gravityX = v / 100f;
-				MakerChaCtrl.UpdateBustGravity();
-			}));
-
-			gravityY = e.AddControl(new MakerSlider(category, "Breast Gravity Y", min, max, -0.03f, this));
-			gravityY.ValueChanged.Subscribe(Observer.Create<float>(v =>
-			{
-				MakerController.gravityY = v / 100f;
-				MakerChaCtrl.UpdateBustGravity();
-			}));
-
-			gravityZ = e.AddControl(new MakerSlider(category, "Breast Gravity Z", min, max, 0f, this));
-			gravityZ.ValueChanged.Subscribe(Observer.Create<float>(v =>
-			{
-				MakerController.gravityZ = v / 100f;
-				MakerChaCtrl.UpdateBustGravity();
-			}));
+					MakerSlider slider = sliders[key] = e.AddControl(new MakerSlider(
+						categories[prefix],
+						BoobController.makerAPILabels[key],
+						min,
+						max,
+						defaultValue,
+						this
+					));
+					slider.ValueChanged.Subscribe(Observer.Create<float>(v =>
+						MakerAPI_SliderValueChanged(prefix, floatKey, v)
+					));
+				}
+			}
 		}
 
 		public void MakerAPI_MakerFinishedLoading(object sender, EventArgs e)
 		{
-			MakerAPI_Update(MakerAPI.GetCharacterControl()?.GetComponent<BoobController>());
+			MakerAPI_Update(MakerController);
 		}
 
-		public static void MakerAPI_TogglePhysics(bool flag)
+		public static void MakerAPI_ToggleValueChanged(string key, bool value)
 		{
-			MakerController.overridePhysics = flag;
-
-			damping.Visible.OnNext(flag);
-			elasticity.Visible.OnNext(flag);
-			stiffness.Visible.OnNext(flag);
-			inert.Visible.OnNext(flag);
-
 			ChaControl chaCtrl = MakerChaCtrl;
+			MakerController.boolData[key] = value;
 
-			chaCtrl.UpdateBustSoftness();
-			chaCtrl.ChangeBustInert(false);
+			switch (key)
+			{
+				case BoobController.OVERRIDE_PHYSICS:
+					sliders[BoobController.DAMPING].Visible.OnNext(value);
+					sliders[BoobController.ELASTICITY].Visible.OnNext(value);
+					sliders[BoobController.STIFFNESS].Visible.OnNext(value);
+					sliders[BoobController.INERT].Visible.OnNext(value);
+
+					chaCtrl.UpdateBustSoftness();
+					chaCtrl.ChangeBustInert(false);
+					break;
+
+				case BoobController.OVERRIDE_GRAVITY:
+					sliders[BoobController.GRAVITY_X].Visible.OnNext(value);
+					sliders[BoobController.GRAVITY_Y].Visible.OnNext(value);
+					sliders[BoobController.GRAVITY_Z].Visible.OnNext(value);
+
+					chaCtrl.UpdateBustGravity();
+					break;
+
+				case BoobController.BUTT + BoobController.OVERRIDE_PHYSICS:
+					sliders[BoobController.BUTT + BoobController.DAMPING].Visible.OnNext(value);
+					sliders[BoobController.BUTT + BoobController.ELASTICITY].Visible.OnNext(value);
+					sliders[BoobController.BUTT + BoobController.STIFFNESS].Visible.OnNext(value);
+					sliders[BoobController.BUTT + BoobController.INERT].Visible.OnNext(value);
+
+					if (value)
+						chaCtrl.UpdateBustSoftness();
+					else
+					{
+						Util.ResetButtPhysics(chaCtrl.GetDynamicBoneBustAndHip(
+							ChaControlDefine.DynamicBoneKind.HipL
+						));
+						Util.ResetButtPhysics(chaCtrl.GetDynamicBoneBustAndHip(
+							ChaControlDefine.DynamicBoneKind.HipR
+						));
+					}
+
+					break;
+
+				case BoobController.BUTT + BoobController.OVERRIDE_GRAVITY:
+					sliders[BoobController.BUTT + BoobController.GRAVITY_X].Visible.OnNext(value);
+					sliders[BoobController.BUTT + BoobController.GRAVITY_Y].Visible.OnNext(value);
+					sliders[BoobController.BUTT + BoobController.GRAVITY_Z].Visible.OnNext(value);
+
+					if (value)
+						chaCtrl.UpdateBustGravity();
+					else
+					{
+						Util.ResetButtGravity(chaCtrl.GetDynamicBoneBustAndHip(
+							ChaControlDefine.DynamicBoneKind.HipL
+						)); Util.ResetButtGravity(chaCtrl.GetDynamicBoneBustAndHip(
+							 ChaControlDefine.DynamicBoneKind.HipR
+						 ));
+					}
+
+					break;
+			}
 		}
 
-		public static void MakerAPI_ToggleGravity(bool flag)
+		public static void MakerAPI_SliderValueChanged(string prefix, string floatKey, float value)
 		{
-			MakerController.overrideGravity = flag;
+			if (BoobController.floatMults.TryGetValue(floatKey, out float mult))
+				value /= mult;
 
-			gravityX.Visible.OnNext(flag);
-			gravityY.Visible.OnNext(flag);
-			gravityZ.Visible.OnNext(flag);
+			string key = prefix + floatKey;
+			MakerController.floatData[key] = value;
 
-			MakerChaCtrl.UpdateBustGravity();
+			switch (key)
+			{
+				case BoobController.DAMPING:
+				case BoobController.ELASTICITY:
+				case BoobController.STIFFNESS:
+					MakerChaCtrl.UpdateBustSoftness();
+					break;
+
+				case BoobController.INERT:
+					MakerChaCtrl.ChangeBustInert(false);
+					break;
+
+				case BoobController.GRAVITY_X:
+				case BoobController.GRAVITY_Y:
+				case BoobController.GRAVITY_Z:
+					MakerChaCtrl.UpdateBustGravity();
+					break;
+
+				case BoobController.BUTT + BoobController.DAMPING:
+				case BoobController.BUTT + BoobController.ELASTICITY:
+				case BoobController.BUTT + BoobController.STIFFNESS:
+				case BoobController.BUTT + BoobController.INERT:
+					MakerChaCtrl.UpdateBustSoftness();
+					break;
+
+				case BoobController.BUTT + BoobController.GRAVITY_X:
+				case BoobController.BUTT + BoobController.GRAVITY_Y:
+				case BoobController.BUTT + BoobController.GRAVITY_Z:
+					MakerChaCtrl.UpdateBustGravity();
+					break;
+			}
 		}
 
 		public static void MakerAPI_Update(BoobController controller)
@@ -121,16 +185,28 @@ namespace HS2_BoobSettings
 			if (controller == null)
 				return;
 
-			overridePhysics?.SetValue(controller.overridePhysics);
-			damping?.SetValue(controller.damping);
-			elasticity?.SetValue(controller.elasticity);
-			stiffness?.SetValue(controller.stiffness);
-			inert?.SetValue(controller.inert);
+			foreach (string prefix in BoobController.prefixKeys)
+			{
+				foreach (string boolKey in BoobController.boolKeys)
+				{
+					string key = prefix + boolKey;
 
-			overrideGravity?.SetValue(controller.overrideGravity);
-			gravityX?.SetValue(controller.gravityX * 100f);
-			gravityY?.SetValue(controller.gravityY * 100f);
-			gravityZ?.SetValue(controller.gravityZ * 100f);
+					if (toggles.TryGetValue(key, out MakerToggle toggle))
+						toggle.SetValue(controller.boolData[key]);
+				}
+
+				foreach (string floatKey in BoobController.floatKeys)
+				{
+					string key = prefix + floatKey;
+					float mult = 1f;
+
+					if (BoobController.floatMults.TryGetValue(floatKey, out float _mult))
+						mult = _mult;
+
+					if (sliders.TryGetValue(key, out MakerSlider slider))
+						slider.SetValue(controller.floatData[key] * mult);
+				}
+			}
 		}
 	}
 }

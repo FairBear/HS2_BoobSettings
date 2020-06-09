@@ -24,8 +24,8 @@ namespace HS2_BoobSettings
 
         public void Awake()
         {
-            SliderMin = Config.Bind(SECTION_GENERAL, "Slider Min. Value", -100f);
-            SliderMax = Config.Bind(SECTION_GENERAL, "Slider Max. Value", 100f);
+            SliderMin = Config.Bind(SECTION_GENERAL, "Slider Min. Value", -500f);
+            SliderMax = Config.Bind(SECTION_GENERAL, "Slider Max. Value", 500f);
 
 
             MakerAPI.RegisterCustomSubCategories += MakerAPI_RegisterCustomSubCategories;

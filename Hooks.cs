@@ -17,28 +17,61 @@ namespace HS2_BoobSettings
 
 			BoobController controller = ___chaCtrl.GetComponent<BoobController>();
 
-			if (controller == null ||
-				!controller.overridePhysics)
+			if (controller == null)
 				return true;
 
-			Util.UpdateSoftness(
-				___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastL),
-				changePtn,
-				controller.damping,
-				controller.elasticity,
-				controller.stiffness
-			);
-			Util.UpdateSoftness(
-				___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastR),
-				changePtn,
-				controller.damping,
-				controller.elasticity,
-				controller.stiffness
-			);
-			// Inert rarely gets updated. This makes sure it does.
-			___chaCtrl.ChangeBustInert(false);
+			bool flag = true;
 
-			return false;
+			if (controller.boolData[BoobController.OVERRIDE_PHYSICS])
+			{
+				flag = false;
+
+				float damping = controller.floatData[BoobController.DAMPING];
+				float elasticity = controller.floatData[BoobController.ELASTICITY];
+				float stiffness = controller.floatData[BoobController.STIFFNESS];
+
+				Util.UpdateBustSoftness(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastL),
+					changePtn,
+					damping,
+					elasticity,
+					stiffness
+				);
+				Util.UpdateBustSoftness(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastR),
+					changePtn,
+					damping,
+					elasticity,
+					stiffness
+				);
+				// Inert rarely gets updated. This makes sure it does.
+				___chaCtrl.ChangeBustInert(false);
+			}
+
+			if (controller.boolData[BoobController.BUTT + BoobController.OVERRIDE_PHYSICS])
+			{
+				float damping = controller.floatData[BoobController.BUTT + BoobController.DAMPING];
+				float elasticity = controller.floatData[BoobController.BUTT + BoobController.ELASTICITY];
+				float stiffness = controller.floatData[BoobController.BUTT + BoobController.STIFFNESS];
+				float inert = controller.floatData[BoobController.BUTT + BoobController.INERT];
+
+				Util.UpdateButtPhysics(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.HipL),
+					damping,
+					elasticity,
+					stiffness,
+					inert
+				);
+				Util.UpdateButtPhysics(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.HipR),
+					damping,
+					elasticity,
+					stiffness,
+					inert
+				);
+			}
+
+			return flag;
 		}
 
 		[HarmonyPrefix]
@@ -48,16 +81,18 @@ namespace HS2_BoobSettings
 			BoobController controller = __instance.GetComponent<BoobController>();
 
 			if (controller == null ||
-				!controller.overridePhysics)
+				!controller.boolData[BoobController.OVERRIDE_PHYSICS])
 				return true;
 
-			Util.UpdateInert(
+			float inert = controller.floatData[BoobController.INERT];
+
+			Util.UpdateBustInert(
 				__instance.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastL),
-				controller.inert
+				inert
 			);
-			Util.UpdateInert(
+			Util.UpdateBustInert(
 				__instance.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastR),
-				controller.inert
+				inert
 			);
 
 			return false;
@@ -74,28 +109,54 @@ namespace HS2_BoobSettings
 
 			BoobController controller = ___chaCtrl.GetComponent<BoobController>();
 
-			if (controller == null ||
-				!controller.overrideGravity)
+			if (controller == null)
 				return true;
 
-			Vector3 gravity = new Vector3(
-				controller.gravityX,
-				controller.gravityY,
-				controller.gravityZ
-			);
+			bool flag = true;
 
-			Util.UpdateGravity(
-				___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastL),
-				changePtn,
-				gravity
-			);
-			Util.UpdateGravity(
-				___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastR),
-				changePtn,
-				gravity
-			);
+			if (controller.boolData[BoobController.OVERRIDE_GRAVITY])
+			{
+				flag = false;
+				Vector3 gravity = new Vector3(
+					controller.floatData[BoobController.GRAVITY_X],
+					controller.floatData[BoobController.GRAVITY_Y],
+					controller.floatData[BoobController.GRAVITY_Z]
+				);
 
-			return false;
+				Util.UpdateBustGravity(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastL),
+					changePtn,
+					gravity
+				);
+				Util.UpdateBustGravity(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.BreastR),
+					changePtn,
+					gravity
+				);
+			}
+
+
+			// Butt
+
+			if (controller.boolData[BoobController.BUTT + BoobController.OVERRIDE_GRAVITY])
+			{
+				Vector3 gravity = new Vector3(
+					controller.floatData[BoobController.BUTT + BoobController.GRAVITY_X],
+					controller.floatData[BoobController.BUTT + BoobController.GRAVITY_Y],
+					controller.floatData[BoobController.BUTT + BoobController.GRAVITY_Z]
+				);
+
+				Util.UpdateButtGravity(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.HipL),
+					gravity
+				);
+				Util.UpdateButtGravity(
+					___chaCtrl.GetDynamicBoneBustAndHip(ChaControlDefine.DynamicBoneKind.HipR),
+					gravity
+				);
+			}
+
+			return flag;
 		}
 	}
 }
