@@ -22,3 +22,9 @@ A mod for Honey Select 2 that adds more options for the breast category.
 ## Installment
 * Extract the `HS2_BoobSettings.dll` in the `BepInEx\plugins` folder.
 * Play.
+
+## Compatibility
+#### Partially compatible with `PushUp` plugin.
+* Only the `Inert` and `Gravity` options work.
+#### Not compatible with `HS2_Jiggle` plugin.
+* `HS2_Jiggle` plugin overrides this plugin.
