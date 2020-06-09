@@ -13,7 +13,7 @@ namespace HS2_BoobSettings
     {
         const string GUID = "com.fairbair.hs2_boobsettings";
         const string Name = "HS2 Boob Settings";
-        const string Version = "1.0.0";
+        const string Version = "1.1.0";
 
 
         const string SECTION_GENERAL = "General";
