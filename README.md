@@ -1,5 +1,5 @@
 # HS2_BoobSettings
-A mod for Honey Select 2 that adds more options for the breast category.
+A mod for Honey Select 2 that adds more options for the breast and lower body (butt) category.
 
 <details>
   <summary>Image</summary>
@@ -8,9 +8,15 @@ A mod for Honey Select 2 that adds more options for the breast category.
 </details>
 
 <details>
-  <summary>GIF (NSFW)</summary>
+  <summary>Boob GIF (NSFW)</summary>
   
 ![](https://raw.githubusercontent.com/FairBear/HS2_BoobSettings/master/Preview/Preview1.gif)
+</details>
+
+<details>
+  <summary>Butt GIF (NSFW)</summary>
+  
+![](https://raw.githubusercontent.com/FairBear/HS2_BoobSettings/master/Preview/Preview2.gif)
 </details>
 
 ## Requirements
