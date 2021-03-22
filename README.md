@@ -19,6 +19,9 @@ A mod for Honey Select 2 that adds more options for the breast and lower body (b
 ![](https://raw.githubusercontent.com/FairBear/HS2_BoobSettings/master/Preview/Preview2.gif)
 </details>
 
+## No Longer in Development
+Development regarding this mod is permanently put to a halt. I sincerly apologize for any bugs currently present as I do not have the time and resources to fix and maintain the mod. You may take and/or modify the source code at your own discretion.
+
 ## Requirements
 * Honey Select 2
 * BepInEx
